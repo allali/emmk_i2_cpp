@@ -10,7 +10,7 @@
  *   H.quiz({...})            QCM interactif
  *   H.reveal(label, html)    réponse cachée
  *   H.variants([...])        onglets de variantes de code
- *   H.table(head, rows)      tableau (oui/non -> badges)
+ *   H.table(head, rows, {frag})  tableau (oui/non -> badges) ; frag : lignes révélées une à une
  *   H.cols(a, b, ...)        colonnes
  *   H.frag(html)             fragment révélé étape par étape
  *   H.frag(html, {withPrev: true})  … révélé en même temps que le fragment précédent
@@ -20,7 +20,7 @@
   let uid = 0;
   const nextId = (p) => p + '-' + (++uid);
 
-  /* opts: { title, hl: [numéros de lignes], mark: {ligne: 'ok'|'err'|'warn'}, small, lang } */
+  /* opts: { title, hl: [numéros de lignes], mark: {ligne: 'ok'|'err'|'warn'}, small | tiny | large, lang } */
   function code(src, opts = {}) {
     const text = dedent(src, opts.lang === 'make' || opts.lang === 'makefile');
     const hl = new Set(opts.hl || []);
@@ -37,7 +37,7 @@
     // blocs « terminal » (shell, gdb, sorties…) : rendus comme une fenêtre de terminal Linux
     const isTerm = opts.term != null ? opts.term : (/^(sh|bash|shell)$/.test(opts.lang || '') || /^(terminal|shell|console|bash|sh|gdb|sortie|output)\b/i.test(opts.title || ''));
     const title = opts.title ? termBar(opts.title, !isTerm) : '';
-    return '<figure class="code' + (isTerm ? ' is-term' : '') + (opts.small ? ' small' : '') + (opts.tiny ? ' tiny' : '') + (opts.cls ? ' ' + opts.cls : '') + '">' + title +
+    return '<figure class="code' + (isTerm ? ' is-term' : '') + (opts.small ? ' small' : '') + (opts.tiny ? ' tiny' : '') + (opts.large ? ' large' : '') + (opts.cls ? ' ' + opts.cls : '') + '">' + title +
       '<button class="copy-btn" title="Copier" aria-label="Copier le code">⧉</button>' +
       '<pre><code>' + body + '</code></pre></figure>';
   }
@@ -136,7 +136,7 @@
         '<button class="var-tab' + (k ? '' : ' active') + '" data-k="' + k + '">' + v.label + '</button>').join('') + '</div>' +
       list.map((v, k) =>
         '<div class="var-panel' + (k ? '' : ' active') + '" data-k="' + k + '">' +
-        (v.code ? code(v.code, { hl: v.hl, mark: v.mark, small: opts.small, title: v.title }) : '') +
+        (v.code ? code(v.code, { hl: v.hl, mark: v.mark, small: opts.small, large: opts.large, title: v.title }) : '') +
         (v.html || '') + (v.note ? '<div class="var-note">' + v.note + '</div>' : '') + '</div>'
       ).join('') + '</div>';
   }
@@ -150,7 +150,7 @@
 
   function table(head, rows, opts = {}) {
     return '<table class="tbl' + (opts.cls ? ' ' + opts.cls : '') + '"><thead><tr>' + head.map(h => '<th>' + h + '</th>').join('') +
-      '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map((c, k) =>
+      '</tr></thead><tbody>' + rows.map(r => '<tr' + (opts.frag ? ' class="frag"' : '') + '>' + r.map((c, k) =>
         (k === 0 ? '<th>' + c + '</th>' : '<td>' + badge(c) + '</td>')).join('') + '</tr>').join('') + '</tbody></table>';
   }
 

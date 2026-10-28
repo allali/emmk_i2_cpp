@@ -250,22 +250,22 @@ Course.chapter({
       html: `
         <p>L’accès aux membres se fait avec ${H.c('.')} ou ${H.c('->')} selon que l’on dispose d’une <b>instance</b> ou d’un <b>pointeur</b> sur une instance.</p>
         ${H.key('Tout membre de classe a pour nom complet <code class="inline">NomClasse::membre</code>. Lorsqu’il n’y a pas d’ambiguïté, <code class="inline">NomClasse::</code> peut être omis.')}
-        ${H.variants([
-          { label: 'Cas automatique', code: `
+        ${H.cols(
+          H.code(`
               ClasseA x;
               x.i = 1;              // i est un attribut public de ClasseA
               x.ClasseA::i = 1;     // idem
               x.methode();          // appel de méthode
               x.ClasseA::methode(); // idem
-            `, note: 'L’instance se trouve dans la <b>pile</b>.' },
-          { label: 'Cas dynamique', code: `
+            `, { title: 'Cas automatique', small: true }) + '<p>L’instance se trouve dans la <b>pile</b>.</p>',
+          H.code(`
               ClasseA *y = new ClasseA();
               y->i = 1;              // i est un attribut public de ClasseA
               y->ClasseA::i = 1;     // idem
               y->methode();          // appel de méthode
               y->ClasseA::methode(); // idem
-            `, note: 'L’instance est allouée dynamiquement dans le <b>tas</b>.' }
-        ])}`
+            `, { title: 'Cas dynamique', small: true }) + '<p>L’instance est allouée dynamiquement dans le <b>tas</b>.</p>'
+        )}`
     },
 
     /* ---------------- this ---------------- */
@@ -349,7 +349,7 @@ Course.chapter({
                     void m();
                 };
             }
-          `, { title: 'A.hpp', small: true }),
+          `, { title: 'A.hpp', large: true }),
           H.variants([
             { label: 'Ré-ouverture', title: 'A.cpp', code: `
                 #include "A.hpp"
@@ -365,7 +365,7 @@ Course.chapter({
                     ...
                 }
               ` }
-          ], { small: true })
+          ], { large: true })
         )}
         ${H.info('Pas de limite sur le nombre d’espaces de noms ni sur leur imbrication. Mais les espaces de noms font partie du nom (symbole) de la fonction, dont la taille est limitée. D’une certaine manière, une <b>classe</b> peut être vue comme un espace de noms particulier.')}`
     },

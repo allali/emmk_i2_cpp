@@ -116,25 +116,8 @@
               delete [] p;
             `, { title: 'un tableau' })
           )}
-          ${H.warn('Ne mélangez jamais les deux formes : ce qui est alloué avec <code class="inline">new T[]</code> se libère avec <code class="inline">delete[]</code>. Une fois <code class="inline">delete</code> appelé, la mémoire à cette adresse n’est plus réservée.')}
-          ${H.info('En C++, on utilise <code class="inline">nullptr</code> au lieu de <code class="inline">NULL</code>. <code class="inline">NULL</code> est une constante qui n’est <strong>pas typée comme un pointeur</strong> : en C++, c’est un <strong>entier</strong> nul (<code class="inline">0</code>). Avec <code class="inline">f(int)</code> et <code class="inline">f(char *)</code>, l’appel <code class="inline">f(NULL)</code> est ambigu (erreur de g++ 11). <code class="inline">nullptr</code> (C++11) est un vrai <strong>pointeur</strong> nul : <code class="inline">f(nullptr)</code> appelle <code class="inline">f(char *)</code>.')}`
-      },
-      {
-        title: 'Allocation : exemple complet',
-        section: 'Automatique & dynamique',
-        html: `
-          ${H.code(`
-            int *i = new int;
-            int *t = new int[10];
-            delete i;
-            delete [] t;
-          `)}
-          ${H.quiz({
-            q: 'Combien y a-t-il d’allocations effectuées dans cet exemple ?',
-            options: ['1', '2', '3', '4'],
-            answer: 3,
-            explain: '<p><strong>4</strong> : 2 automatiques et 2 dynamiques.</p><p>Il y a deux allocations <b>automatiques</b> de <code class="inline">sizeof(int *)</code> pour les variables <code class="inline">i</code> et <code class="inline">t</code> (dans la pile), et deux allocations <b>dynamiques</b> avec <code class="inline">new</code> (dans le tas).</p>'
-          })}`
+          ${H.frag(H.warn('Ne mélangez jamais les deux formes : ce qui est alloué avec <code class="inline">new T[]</code> se libère avec <code class="inline">delete[]</code>. Une fois <code class="inline">delete</code> appelé, la mémoire à cette adresse n’est plus réservée.') +
+            H.info('En C++, on utilise <code class="inline">nullptr</code> au lieu de <code class="inline">NULL</code>. <code class="inline">NULL</code> est une constante qui n’est <strong>pas typée comme un pointeur</strong> : en C++, c’est un <strong>entier</strong> nul (<code class="inline">0</code>). Avec <code class="inline">f(int)</code> et <code class="inline">f(char *)</code>, l’appel <code class="inline">f(NULL)</code> est ambigu (erreur de g++ 11). <code class="inline">nullptr</code> (C++11) est un vrai <strong>pointeur</strong> nul : <code class="inline">f(nullptr)</code> appelle <code class="inline">f(char *)</code>.'))}`
       },
       {
         title: 'Allocation : ce qui se passe en mémoire',

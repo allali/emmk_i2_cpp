@@ -142,8 +142,11 @@
     const st = stepState(spec, k);
     const prev = prevK != null && prevK !== k ? stepState(spec, prevK) : null;
     el.querySelector('.dg-canvas').innerHTML = renderSVG(spec, st, prev);
+    // toutes les notes sont superposées et seule celle de l'étape courante est visible : la zone garde la
+    // hauteur de la plus longue, la diapo ne change pas de taille d'une étape à l'autre (zoom stable)
     const note = el.querySelector('.dg-note');
-    if (note) note.innerHTML = st.note || '';
+    if (note) note.innerHTML = spec.steps.some(s => s.note)
+      ? spec.steps.map((s, j) => '<div class="dg-n' + (j === k ? ' on' : '') + '">' + (s.note || '') + '</div>').join('') : '';
     el.querySelectorAll('.dg-dots i').forEach((d, j) => d.classList.toggle('on', j <= k));
     const pb = el.querySelector('.dg-prev'), nb = el.querySelector('.dg-next');
     if (pb) pb.disabled = k === 0;

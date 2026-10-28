@@ -50,7 +50,7 @@ Course.chapter({
           ['constance', 'final', '<b>const</b> (variables, références, méthodes)', 'Classes'],
           ['généricité', 'List&lt;T&gt; (génériques)', '<b>templates</b> : code généré par type', 'Templates'],
           ['fichiers', 'un .java par classe', '<b>.hpp</b> (déclaration) + <b>.cpp</b> (code)', 'Classes']
-        ], { cls: 'left' })}`
+        ], { cls: 'left', frag: true })}`
     },
     {
       title: 'Objectifs du cours',

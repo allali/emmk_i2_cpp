@@ -270,6 +270,7 @@ figure.code pre, figure.term pre {
 }
 figure.code.small pre { font-size: clamp(12px, .98vw, 14.5px); }
 figure.code.tiny pre { font-size: clamp(11px, .85vw, 13px); }
+figure.code.large pre { font-size: clamp(16px, 1.4vw, 20px); }
 figure.code pre, figure.term pre, code.inline { font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'calt' 0; }
 figure.code pre code { display: block; counter-reset: ln; }
 .ln { display: block; padding: 0 18px 0 12px; border-left: 3px solid transparent; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -448,6 +449,9 @@ figure.term pre { padding: 14px 18px; }
 .dg-note { flex: 1; min-width: 220px; font-size: .95em; color: var(--text-2); }
 .dg-note.solo { margin-top: 10px; }
 .dg-note:empty { display: none; }
+.dg-note { display: grid; }
+.dg-n { grid-area: 1 / 1; visibility: hidden; }
+.dg-n.on { visibility: visible; }
 
 /* ---------- Page de garde de chapitre ---------- */
 .slide.cover { min-height: 70vh; display: grid; place-items: center; text-align: center; }
@@ -574,6 +578,7 @@ body.fullscreen .slide-body { font-size: clamp(18px, 1.5vw, 34px); }
 body.fullscreen .slide-title { font-size: clamp(30px, 2.8vw, 64px); }
 body.fullscreen figure.code pre, body.fullscreen figure.term pre { font-size: clamp(15px, 1.2vw, 28px); }
 body.fullscreen figure.code.small pre { font-size: clamp(14px, 1.1vw, 26px); }
+body.fullscreen figure.code.large pre { font-size: clamp(19px, 1.5vw, 34px); }
 body.fullscreen figure.code.tiny pre { font-size: clamp(13px, .98vw, 23px); }
 body.fullscreen .slide.cover, body.fullscreen .hero { min-height: 80vh; }
 

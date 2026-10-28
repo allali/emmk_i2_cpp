@@ -31,11 +31,27 @@
   function payload() {
     return { format: 'cours-modifs/1', version: VERSION, updated: new Date().toISOString(), modifs: items };
   }
+  // fusion avec le fichier sur disque : pour chaque demande, la version la plus récente (champ updated) gagne.
+  // Le fichier peut avoir été modifié pendant que la page était ouverte (demande traitée, réponse ajoutée…).
+  function merge(data) {
+    const dead = new Set(readLocal(TOMB, []));
+    const byId = {};
+    (data.modifs || []).forEach(m => { if (!dead.has(m.id)) byId[m.id] = m; });
+    items.forEach(m => { if (!byId[m.id] || (m.updated || '') > (byId[m.id].updated || '')) byId[m.id] = m; });
+    items = Object.values(byId).sort((a, b) => a.slide.index - b.slide.index || a.created.localeCompare(b.created));
+  }
   function save() {
     writeLocal(KEY, items);
     updateBadge();
     if (!server) { setStatus(); return; }
-    fetch(API, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload(), null, 2) })
+    // relire le fichier juste avant d'écrire : ne jamais écraser une version plus récente par une copie périmée
+    fetch(API, { cache: 'no-store' }).then(r => r.ok ? r.json() : { modifs: [] })
+      .then(data => {
+        merge(data);
+        writeLocal(KEY, items);
+        updateBadge();
+        return fetch(API, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload(), null, 2) });
+      })
       .then(r => { server = r.ok; setStatus(); })
       .catch(() => { server = false; setStatus(); });
   }
@@ -46,11 +62,7 @@
         server = true;
         document.body.classList.add('fb-on');   // serveur local : la fonctionnalité devient disponible
         items = readLocal(KEY, []);
-        const dead = new Set(readLocal(TOMB, []));
-        const byId = {};
-        (data.modifs || []).forEach(m => { if (!dead.has(m.id)) byId[m.id] = m; });
-        items.forEach(m => { if (!byId[m.id] || (m.updated || '') > (byId[m.id].updated || '')) byId[m.id] = m; });
-        items = Object.values(byId).sort((a, b) => a.slide.index - b.slide.index || a.created.localeCompare(b.created));
+        merge(data);
         save();
       })
       .catch(() => {});   // pas de serveur local : fonctionnalité désactivée
