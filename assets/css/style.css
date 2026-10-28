@@ -398,6 +398,18 @@ figure.term pre { padding: 14px 18px; }
 .var-panel { display: none; }
 .var-panel.active { display: block; animation: enterR .25s ease; }
 .var-panel > * + * { margin-top: 10px; }
+/* Code de référence à gauche (.cols-ref), variantes à onglets à droite : la barre de titre de la fenêtre de gauche
+   remonte à hauteur des onglets, l'intérieur des deux fenêtres de code commence au même niveau. */
+.cols-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(36px, auto) auto; column-gap: 22px; align-items: start; }
+.cols-tabs > .variants { display: contents; }
+.cols-tabs > .variants > .var-tabs { grid-column: 2; grid-row: 1; align-self: end; }
+.cols-tabs > .variants > .var-panel { grid-column: 2; grid-row: 2; }
+.cols-tabs > .cols-ref { grid-column: 1; grid-row: 2; margin-top: -35px; }
+.cols-tabs > .cols-ref > figure.code > .code-title { height: 34px; box-sizing: border-box; }
+/* fenêtres de droite avec barre de titre : on aligne simplement les fenêtres */
+.cols-tabs:has(.var-panel .code-title) > .cols-ref { margin-top: 0; }
+.cols-tabs .var-panel .code-title { height: 34px; box-sizing: border-box; }
+.cols-ref > * + * { margin-top: 10px; }
 .var-note { padding: 10px 14px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); font-size: .95em; }
 
 /* ---------- Diagrammes ---------- */
@@ -547,6 +559,8 @@ figure.term pre { padding: 14px 18px; }
 @media (max-width: 900px) {
   #sidebar { position: fixed; z-index: 40; top: 0; bottom: 0; left: 0; box-shadow: var(--shadow); }
   .cols, .files { grid-template-columns: 1fr; }
+  .cols-tabs, .cols-tabs > .variants { display: block; }
+  .cols-tabs > .cols-ref { margin: 0 0 14px; }
   #viewport { padding: 20px 16px 30px; }
 }
 @media (max-width: 560px) {

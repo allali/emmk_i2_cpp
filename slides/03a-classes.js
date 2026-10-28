@@ -275,8 +275,8 @@ Course.chapter({
       html: `
         <p>Lors d’un appel de méthode, ${H.c('this')} fait référence à l’<strong>instance sur laquelle la méthode est appelée</strong> (le site d’appel).</p>
         ${H.key('<code class="inline">this</code> est un <strong>pointeur</strong> : son type est <code class="inline">NomClasse * const</code> (on verra plus tard le sens de <code class="inline">const</code>).')}
-        ${H.variants([
-          { label: 'Avec this', code: `
+        ${H.cols(
+          H.code(`
               class A {
                   int attributPrive;
               public:
@@ -284,8 +284,8 @@ Course.chapter({
                       this->attributPrive = valeur;
                   }
               };
-            `, hl: [5] },
-          { label: 'Sans this', code: `
+            `, { title: 'Avec this', hl: [5] }),
+          H.code(`
               class A {
                   int attributPrive;
               public:
@@ -293,8 +293,9 @@ Course.chapter({
                       attributPrive = valeur;
                   }
               };
-            `, hl: [5], note: 'Lorsqu’il n’y a pas de variable locale de même nom que l’attribut, on peut <b>omettre</b> <code class="inline">this</code>.' }
-        ])}`
+            `, { title: 'Sans this', hl: [5] }) +
+            '<p>Lorsqu’il n’y a pas de variable locale de même nom que l’attribut, on peut <b>omettre</b> <code class="inline">this</code>.</p>'
+        )}`
     },
     {
       title: 'Opérateur de portée <code>::</code>',
@@ -341,16 +342,16 @@ Course.chapter({
       section: 'Espaces de noms',
       html: `
         <p>Pour écrire le code des méthodes dans le <code class="inline">.cpp</code>, on peut soit <b>ré-ouvrir</b> l’espace de noms, soit utiliser l’<b>opérateur de portée</b>.</p>
-        ${H.cols(
-          H.code(`
+        <div class="cols-tabs">
+          <div class="cols-ref">${H.code(`
             namespace tec {
                 class A {
                 public:
                     void m();
                 };
             }
-          `, { title: 'A.hpp', large: true }),
-          H.variants([
+          `, { title: 'A.hpp', large: true })}</div>
+          ${H.variants([
             { label: 'Ré-ouverture', title: 'A.cpp', code: `
                 #include "A.hpp"
                 namespace tec {
@@ -365,8 +366,8 @@ Course.chapter({
                     ...
                 }
               ` }
-          ], { large: true })
-        )}
+          ], { large: true })}
+        </div>
         ${H.info('Pas de limite sur le nombre d’espaces de noms ni sur leur imbrication. Mais les espaces de noms font partie du nom (symbole) de la fonction, dont la taille est limitée. D’une certaine manière, une <b>classe</b> peut être vue comme un espace de noms particulier.')}`
     },
     {
@@ -375,8 +376,8 @@ Course.chapter({
       html: `
         <p>Le mot-clé ${H.c('using')} rend accessible tout ou partie d’un espace de noms dans une fonction, un espace de noms ou tout le code.
         Comparez les variantes :</p>
-        ${H.variants([
-          { label: 'Sans rien', code: `
+        <div class="cols-tabs">
+          <div class="cols-ref">${H.code(`
               namespace spatial {
                   class Navette {};
               }
@@ -387,7 +388,9 @@ Course.chapter({
               void starWars() {
                   Navette n; // Erreur !
               }
-            `, mark: { 5: 'err', 7: 'err', 9: 'err' }, note: '<code class="inline">Navette</code> n’est connue qu’à l’intérieur de <code class="inline">spatial</code>.' },
+            `, { title: 'Sans rien', mark: { 5: 'err', 7: 'err', 9: 'err' } })}
+            <p><code class="inline">Navette</code> n’est connue qu’à l’intérieur de <code class="inline">spatial</code>.</p></div>
+          ${H.variants([
           { label: 'Portée ::', code: `
               namespace spatial {
                   class Navette {};
@@ -465,7 +468,8 @@ Course.chapter({
                   Navette n; // ok
               }
             `, mark: { 5: 'err', 7: 'err', 9: 'warn', 10: 'ok' }, note: '<code class="inline">using namespace spatial;</code> importe <b>tous</b> les noms de <code class="inline">spatial</code>.' }
-        ], { small: true })}`
+          ])}
+        </div>`
     },
     {
       title: '<code>using</code> : des synonymes locaux',
