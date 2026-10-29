@@ -34,22 +34,22 @@
   const autoZone = { id: 'pile', x: 10, y: 10, w: 270, h: 160, label: 'pile (stack)', kind: 'zone', fs: 16 };
   const autoI = (lbl, kind) => ({ id: 'i', x: 80, y: 70, w: 170, h: 50, label: lbl, kind: kind || 'cell', tag: 'i', fs: 18, tagFs: 20 });
   const autoAdr = { id: 'adr', x: 320, y: 65, w: 130, h: 60, label: '&i\n0x7F10', kind: 'plain', fs: 17 };
-  const autoSize = { x: 165, y: 150, text: 'sizeof(int) octets', anchor: 'middle', fs: 15, cls: 'muted' };
+  const autoSize = { x: 165, y: 150, text: 'sizeof(X) octets', anchor: 'middle', fs: 15, cls: 'muted' };
   const autoDiagram = H.diagram({
     w: 460, h: 180, maxw: 380,
     code: `
       {
-          int i;   // i est allouée dans la pile
+          X i;     // i est allouée dans la pile
           // &i : adresse dans la pile où
-          //      sizeof(int) octets sont réservés
+          //      sizeof(X) octets sont réservés
       } // sortie du bloc : dépilement
     `,
     common: { boxes: [autoZone] },
     steps: [
       { line: 1, note: 'Entrée dans le bloc : rien n’est encore réservé pour <code class="inline">i</code>.' },
-      { line: 2, boxes: [autoI('?')], texts: [autoSize],
-        note: '<code class="inline">int i;</code> : <code class="inline">sizeof(int)</code> octets sont réservés <b>automatiquement</b> dans la pile (non initialisée : valeur indéterminée).' },
-      { line: [3, 4], boxes: [autoI('?'), autoAdr], arrows: [{ from: 'adr', to: 'i' }], texts: [autoSize],
+      { line: 2, boxes: [autoI('X')], texts: [autoSize],
+        note: '<code class="inline">X i;</code> : <code class="inline">sizeof(X)</code> octets sont réservés <b>automatiquement</b> dans la pile (<code class="inline">X</code> : un type quelconque, par exemple une classe).' },
+      { line: [3, 4], boxes: [autoI('X'), autoAdr], arrows: [{ from: 'adr', to: 'i' }], texts: [autoSize],
         note: '<code class="inline">&amp;i</code> est l’adresse de cette zone de la pile (ici <code class="inline">0x7F10</code>, valeur d’exemple).' },
       { line: 5, boxes: [autoI('dépilé', 'ghost'), autoAdr], arrows: [{ from: 'adr', to: 'i', kind: 'bad' }],
         note: 'Sortie du bloc : <b>dépilement</b>. L’adresse <code class="inline">&amp;i</code> n’est plus réservée.' }
@@ -66,6 +66,73 @@
     sections: ['Automatique & dynamique', 'Typage', 'auto', 'Initialisation = et {}', 'L’essentiel'],
     slides: [
       {
+        title: 'Fil rouge : un vecteur en C',
+        section: 'Automatique & dynamique',
+        html: `
+          <p>Point de départ en C, que l’on fera évoluer en C++ au fil des notions.</p>
+          <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_H
+#define VECTOR_H
+
+typedef struct {
+    int *values;
+    int size;
+} Vector;
+
+Vector *vector_create(int size);
+void vector_destroy(Vector *v);
+int vector_get(const Vector *v, int i);
+void vector_set(Vector *v, int i, int x);
+Vector *vector_add(Vector *a, Vector *b);
+
+#endif`, { title: 'Vector.h', small: true })}</div>
+            <div class="col">${H.code(`#include <stdlib.h>
+#include "Vector.h"
+
+Vector *vector_create(int size) {
+    Vector *v = malloc(sizeof(Vector));
+    v->values = malloc(size * sizeof(int));
+    v->size = size;
+    return v;
+}
+void vector_destroy(Vector *v) {
+    free(v->values);
+    free(v);
+}
+int vector_get(const Vector *v, int i) {
+    return v->values[i];
+}
+void vector_set(Vector *v, int i, int x) {
+    v->values[i] = x;
+}
+Vector *vector_add(Vector *a, Vector *b) {
+    if (a->size != b->size) return NULL;
+    Vector *r = vector_create(a->size);
+    for (int i = 0; i < a->size; i++)
+        r->values[i] = a->values[i] + b->values[i];
+    return r;
+}`, { title: 'Vector.c', small: true })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.h"
+
+int main(void) {
+    Vector *a = vector_create(3);
+    Vector *b = vector_create(3);
+    for (int i = 0; i < 3; i++) {
+        vector_set(a, i, i);
+        vector_set(b, i, 10 * i);
+    }
+    Vector *c = vector_add(a, b);
+    printf("%d\\n", vector_get(c, 2));
+    vector_destroy(a);
+    vector_destroy(b);
+    vector_destroy(c);
+    return 0;
+}`, { title: 'main.c', small: true })}</div>
+          </div>
+        `
+      },
+      {
         title: 'Allocation automatique',
         section: 'Automatique & dynamique',
         html: `
@@ -73,10 +140,10 @@
           ${autoDiagram}
           ${H.list([
             'La variable <code class="inline">i</code> est allouée <strong>automatiquement</strong> dans la pile.',
-            '<code class="inline">&amp;i</code> correspond à une adresse de la pile à laquelle <code class="inline">sizeof(int)</code> octets sont réservés.',
+            '<code class="inline">&amp;i</code> correspond à une adresse de la pile à laquelle <code class="inline">sizeof(X)</code> octets sont réservés.',
             'À la <strong>sortie du bloc</strong> où <code class="inline">i</code> est déclarée, il y a dépilement : l’adresse <code class="inline">&amp;i</code> n’est plus réservée.'
           ], { frag: true })}
-          ${H.java('<mark><b>Un objet</b></mark> n’est <b>jamais</b> dans la pile : seules les variables primitives et les références y sont. En C++, un objet peut vivre dans la pile, comme un <code class="inline">int</code>.')}`
+          ${H.java('<mark><b>Un objet</b></mark> n’est <b>jamais</b> dans la pile : seules les variables primitives et les références y sont. En C++, un objet peut vivre dans la pile, comme un <code class="inline">X</code>.')}`
       },
       {
         title: 'Allocation dynamique',
@@ -99,8 +166,8 @@
         section: 'Automatique & dynamique',
         html: `
           ${H.table(['Allocation', 'Libération'], [
-            ['new T', H.c('delete p;')],
-            ['new T[n]', H.c('delete [] p;')]
+            ['T *p = new T', H.c('delete p;')],
+            ['T *p = new T[n]', H.c('delete [] p;')]
           ])}
           ${H.cols(
             H.code(`
@@ -152,6 +219,72 @@
           `)}`
       },
       {
+        title: 'Fil rouge : de <code>malloc</code> à <code>new</code>',
+        section: 'Automatique & dynamique',
+        html: `
+          <p><code class="inline">malloc</code> / <code class="inline">free</code> deviennent <code class="inline">new</code> / <code class="inline">delete</code> (<code class="inline">delete[]</code> pour un tableau), <code class="inline">NULL</code> devient <code class="inline">nullptr</code>.</p>
+          <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+typedef struct {
+    int *values;
+    int size;
+} Vector;
+
+Vector *vector_create(int size);
+void vector_destroy(Vector *v);
+int vector_get(const Vector *v, int i);
+void vector_set(Vector *v, int i, int x);
+Vector *vector_add(Vector *a, Vector *b);
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [1, 2] })}</div>
+            <div class="col">${H.code(`#include "Vector.hpp"
+
+Vector *vector_create(int size) {
+    Vector *v = new Vector;
+    v->values = new int[size];
+    v->size = size;
+    return v;
+}
+void vector_destroy(Vector *v) {
+    delete[] v->values;
+    delete v;
+}
+int vector_get(const Vector *v, int i) {
+    return v->values[i];
+}
+void vector_set(Vector *v, int i, int x) {
+    v->values[i] = x;
+}
+Vector *vector_add(Vector *a, Vector *b) {
+    if (a->size != b->size) return nullptr;
+    Vector *r = vector_create(a->size);
+    for (int i = 0; i < a->size; i++)
+        r->values[i] = a->values[i] + b->values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true, hl: [1, 4, 5, 10, 11, 20] })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector *a = vector_create(3);
+    Vector *b = vector_create(3);
+    for (int i = 0; i < 3; i++) {
+        vector_set(a, i, i);
+        vector_set(b, i, 10 * i);
+    }
+    Vector *c = vector_add(a, b);
+    printf("%d\\n", vector_get(c, 2));
+    vector_destroy(a);
+    vector_destroy(b);
+    vector_destroy(c);
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [2] })}</div>
+          </div>
+        `
+      },
+      {
         title: 'Typage',
         section: 'Typage',
         html: `
@@ -195,6 +328,72 @@
              `, { title: 'tableau' })}`
           )}
           ${H.info('On reviendra plus tard sur <code class="inline">auto</code>.')}`
+      },
+      {
+        title: 'Fil rouge : <code>auto</code>',
+        section: 'auto',
+        html: `
+          <p>Le type de <code class="inline">r</code> et de <code class="inline">c</code> est déduit de la valeur de retour de la fonction (<code class="inline">Vector *</code>).</p>
+          <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+typedef struct {
+    int *values;
+    int size;
+} Vector;
+
+Vector *vector_create(int size);
+void vector_destroy(Vector *v);
+int vector_get(const Vector *v, int i);
+void vector_set(Vector *v, int i, int x);
+Vector *vector_add(Vector *a, Vector *b);
+
+#endif`, { title: 'Vector.hpp', small: true })}</div>
+            <div class="col">${H.code(`#include "Vector.hpp"
+
+Vector *vector_create(int size) {
+    Vector *v = new Vector;
+    v->values = new int[size];
+    v->size = size;
+    return v;
+}
+void vector_destroy(Vector *v) {
+    delete[] v->values;
+    delete v;
+}
+int vector_get(const Vector *v, int i) {
+    return v->values[i];
+}
+void vector_set(Vector *v, int i, int x) {
+    v->values[i] = x;
+}
+Vector *vector_add(Vector *a, Vector *b) {
+    if (a->size != b->size) return nullptr;
+    auto r = vector_create(a->size);
+    for (int i = 0; i < a->size; i++)
+        r->values[i] = a->values[i] + b->values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true, hl: [21] })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector *a = vector_create(3);
+    Vector *b = vector_create(3);
+    for (int i = 0; i < 3; i++) {
+        vector_set(a, i, i);
+        vector_set(b, i, 10 * i);
+    }
+    auto c = vector_add(a, b);
+    printf("%d\\n", vector_get(c, 2));
+    vector_destroy(a);
+    vector_destroy(b);
+    vector_destroy(c);
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [11] })}</div>
+          </div>
+        `
       },
       {
         title: 'Initialisation avec <code>=</code>',

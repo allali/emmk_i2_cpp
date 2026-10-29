@@ -37,18 +37,18 @@ Course.chapter({
         à partir de l’objet <b>classe</b> (description / générateur). Elle peut être :</p>
         ${H.cols(
           `${H.code(`
-             A *x = new A();
-             A *y = new A{};
-           `, { title: 'allocation dynamique' })}
-           <p>L’instance est située dans le <strong>tas</strong>.</p>`,
-          `${H.code(`
              A z;
              A t{};
            `, { title: 'allocation automatique' })}
-           <p>L’instance est située dans la <strong>pile</strong>.</p>`
+           <p>L’instance est située dans la <strong>pile</strong>.</p>`,
+          `${H.code(`
+             A *x = new A();
+             A *y = new A{};
+           `, { title: 'allocation dynamique' })}
+           <p>L’instance est située dans le <strong>tas</strong>.</p>`
         )}
         ${H.info('Dans les deux cas, une ressource (une adresse mémoire) est associée à l’instance.')}
-        ${H.java('<code class="inline">A z;</code> déclare une <b>référence</b> qui vaut <code class="inline">null</code> ; seul <code class="inline">new</code> crée un objet. En C++, <code class="inline">A z;</code> <strong>construit un objet</strong>, directement dans la pile.')}`
+        ${H.java('<code class="inline">A z;</code> déclare une <b>référence non initialisée</b> ; seul <code class="inline">new</code> crée un objet. En C++, <code class="inline">A z;</code> <strong>construit un objet</strong>, directement dans la pile.')}`
     },
 
     /* ---------------- Visibilité, friend, struct ---------------- */
@@ -124,6 +124,72 @@ Course.chapter({
           `, { title: 'allocation automatique' })}</div>
         </div>
         ${H.tip('Le nom <code class="inline">struct A</code> lève l’ambiguïté si une fonction porte aussi le nom <code class="inline">A</code> (héritage du C).')}`
+    },
+    {
+      title: 'Fil rouge : <code>struct</code> sans <code>typedef</code>',
+      section: 'Visibilité, friend, struct',
+      html: `
+        <p>En C++, le nom de la structure est un type : le <code class="inline">typedef</code> devient inutile.</p>
+        <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
+          <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+struct Vector {
+    int *values;
+    int size;
+};
+
+Vector *vector_create(int size);
+void vector_destroy(Vector *v);
+int vector_get(const Vector *v, int i);
+void vector_set(Vector *v, int i, int x);
+Vector *vector_add(Vector *a, Vector *b);
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [4, 7] })}</div>
+          <div class="col">${H.code(`#include "Vector.hpp"
+
+Vector *vector_create(int size) {
+    Vector *v = new Vector;
+    v->values = new int[size];
+    v->size = size;
+    return v;
+}
+void vector_destroy(Vector *v) {
+    delete[] v->values;
+    delete v;
+}
+int vector_get(const Vector *v, int i) {
+    return v->values[i];
+}
+void vector_set(Vector *v, int i, int x) {
+    v->values[i] = x;
+}
+Vector *vector_add(Vector *a, Vector *b) {
+    if (a->size != b->size) return nullptr;
+    auto r = vector_create(a->size);
+    for (int i = 0; i < a->size; i++)
+        r->values[i] = a->values[i] + b->values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true })}</div>
+          <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector *a = vector_create(3);
+    Vector *b = vector_create(3);
+    for (int i = 0; i < 3; i++) {
+        vector_set(a, i, i);
+        vector_set(b, i, 10 * i);
+    }
+    auto c = vector_add(a, b);
+    printf("%d\\n", vector_get(c, 2));
+    vector_destroy(a);
+    vector_destroy(b);
+    vector_destroy(c);
+    return 0;
+}`, { title: 'main.cpp', small: true })}</div>
+        </div>
+      `
     },
     {
       title: '<code>friend</code> : définition',
@@ -211,6 +277,7 @@ Course.chapter({
       html: `
         ${H.files([
           { name: 'Test.hpp', code: `
+              #pragma once
               class Test {
                   int i;   // attribut privé
               public:
@@ -317,6 +384,73 @@ Course.chapter({
           };
         `, { hl: [6, 7, 10] })}
         ${H.tip('Le nom le plus <b>proche</b> (local) masque les autres : <code class="inline">A::</code> ou <code class="inline">this-&gt;</code> désignent l’attribut, <code class="inline">::</code> seul désigne la portée globale.')}`
+    },
+    {
+      title: 'Fil rouge : des méthodes',
+      section: 'this',
+      html: `
+        <p>Les fonctions deviennent des méthodes : le paramètre <code class="inline">Vector *v</code> disparaît, c’est <code class="inline">this</code> (<code class="inline">values</code> ≡ <code class="inline">this->values</code>). <code class="inline">vector_create</code> et <code class="inline">vector_destroy</code> restent des fonctions pour l’instant.</p>
+        <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
+          <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+struct Vector {
+    int *values;
+    int size;
+
+    int get(int i);
+    void set(int i, int x);
+    Vector *add(Vector *b);
+};
+
+Vector *vector_create(int size);
+void vector_destroy(Vector *v);
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [8, 9, 10] })}</div>
+          <div class="col">${H.code(`#include "Vector.hpp"
+
+Vector *vector_create(int size) {
+    Vector *v = new Vector;
+    v->values = new int[size];
+    v->size = size;
+    return v;
+}
+void vector_destroy(Vector *v) {
+    delete[] v->values;
+    delete v;
+}
+int Vector::get(int i) {
+    return values[i];
+}
+void Vector::set(int i, int x) {
+    values[i] = x;
+}
+Vector *Vector::add(Vector *b) {
+    if (size != b->size) return nullptr;
+    auto r = vector_create(size);
+    for (int i = 0; i < size; i++)
+        r->values[i] = values[i] + b->values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true, hl: [13, 14, 16, 17, 19, 20, 21, 22, 23] })}</div>
+          <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector *a = vector_create(3);
+    Vector *b = vector_create(3);
+    for (int i = 0; i < 3; i++) {
+        a->set(i, i);
+        b->set(i, 10 * i);
+    }
+    auto c = a->add(b);
+    printf("%d\\n", c->get(2));
+    vector_destroy(a);
+    vector_destroy(b);
+    vector_destroy(c);
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [8, 9, 11, 12] })}</div>
+        </div>
+      `
     },
 
     /* ---------------- Espaces de noms ---------------- */
@@ -696,6 +830,70 @@ Course.chapter({
         `, { title: 'avec {}' })}</div>
         </div>
         ${H.info('Contrairement au cas automatique, <code class="inline">new A()</code> est bien une construction par défaut.')}`
+    },
+    {
+      title: 'Fil rouge : constructeur',
+      section: 'Constructeur',
+      html: `
+        <p>Le constructeur remplace <code class="inline">vector_create</code> : <code class="inline">new Vector(3)</code> alloue <b>et</b> initialise l’instance.</p>
+        <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
+          <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+struct Vector {
+    int *values;
+    int size;
+
+    Vector(int size);
+    int get(int i) const;
+    void set(int i, int x);
+    Vector *add(const Vector &b) const;
+};
+
+void vector_destroy(Vector *v);
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [8] })}</div>
+          <div class="col">${H.code(`#include "Vector.hpp"
+
+Vector::Vector(int size)
+    : values(new int[size]), size(size) {
+}
+void vector_destroy(Vector *v) {
+    delete[] v->values;
+    delete v;
+}
+int Vector::get(int i) const {
+    return values[i];
+}
+void Vector::set(int i, int x) {
+    values[i] = x;
+}
+Vector *Vector::add(const Vector &b) const {
+    if (size != b.size) return nullptr;
+    auto r = new Vector(size);
+    for (int i = 0; i < size; i++)
+        r->values[i] = values[i] + b.values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true, hl: [3, 4, 18] })}</div>
+          <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector *a = new Vector(3);
+    Vector *b = new Vector(3);
+    for (int i = 0; i < 3; i++) {
+        a->set(i, i);
+        b->set(i, 10 * i);
+    }
+    auto c = a->add(*b);
+    printf("%d\\n", c->get(2));
+    vector_destroy(a);
+    vector_destroy(b);
+    vector_destroy(c);
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [5, 6] })}</div>
+        </div>
+      `
     },
     {
       title: 'Et pour les types primitifs ?',

@@ -170,7 +170,8 @@
                   return t[i];
               }
               element(t, 5) = 10; // modifie t[5]
-            `)}`)
+              element(t, 20) = 99; // !!! segfault
+            `, { mark: { 5: 'err' } })}`)
           )}
           ${H.frag(H.rule('Sauf pour les types primitifs, on ne prendra plus les instances <strong>par recopie</strong> mais <strong>par référence</strong>.'), { withPrev: true })}`
       },
@@ -361,6 +362,73 @@
               }` }
           ])}
           ${H.warn('Dans <code class="inline">m() const</code>, <code class="inline">this-&gt;d</code> est un <code class="inline">int * const</code> : on ne peut pas changer le pointeur, mais on peut modifier l’entier pointé !')}`
+      },
+      {
+        title: 'Fil rouge : <code>const</code> et références',
+        section: 'Références et const',
+        html: `
+          <p><code class="inline">get</code> et <code class="inline">add</code> ne modifient pas l’instance : ce sont des méthodes <code class="inline">const</code>. <code class="inline">b</code> est passé par référence constante.</p>
+          <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+struct Vector {
+    int *values;
+    int size;
+
+    int get(int i) const;
+    void set(int i, int x);
+    Vector *add(const Vector &b) const;
+};
+
+Vector *vector_create(int size);
+void vector_destroy(Vector *v);
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [8, 10] })}</div>
+            <div class="col">${H.code(`#include "Vector.hpp"
+
+Vector *vector_create(int size) {
+    Vector *v = new Vector;
+    v->values = new int[size];
+    v->size = size;
+    return v;
+}
+void vector_destroy(Vector *v) {
+    delete[] v->values;
+    delete v;
+}
+int Vector::get(int i) const {
+    return values[i];
+}
+void Vector::set(int i, int x) {
+    values[i] = x;
+}
+Vector *Vector::add(const Vector &b) const {
+    if (size != b.size) return nullptr;
+    auto r = vector_create(size);
+    for (int i = 0; i < size; i++)
+        r->values[i] = values[i] + b.values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true, hl: [13, 19, 20, 23] })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector *a = vector_create(3);
+    Vector *b = vector_create(3);
+    for (int i = 0; i < 3; i++) {
+        a->set(i, i);
+        b->set(i, 10 * i);
+    }
+    auto c = a->add(*b);
+    printf("%d\\n", c->get(2));
+    vector_destroy(a);
+    vector_destroy(b);
+    vector_destroy(c);
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [11] })}</div>
+          </div>
+        `
       },
       {
         title: 'Appeler une méthode sur une instance <code>const</code>',
@@ -599,6 +667,67 @@
             <p>Il est ainsi possible de « simuler » un tableau dans la pile avec une <strong>désallocation automatique</strong>.</p>
             ${H.key('C’est le principe du <b>RAII</b> : <strong>acquérir la ressource dans le constructeur, la libérer dans le destructeur</strong>.')}`
           )}`
+      },
+      {
+        title: 'Fil rouge : destructeur',
+        section: 'Destructeur',
+        html: `
+          <p>Le destructeur remplace <code class="inline">vector_destroy</code>. Les attributs deviennent privés (<code class="inline">class</code>). <code class="inline">a</code> et <code class="inline">b</code> sont automatiques : détruits à la fin du bloc, sans <code class="inline">delete</code>.</p>
+          <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+class Vector {
+    int *values;
+    int size;
+
+public:
+    Vector(int size);
+    ~Vector();
+    int get(int i) const;
+    void set(int i, int x);
+    Vector *add(const Vector &b) const;
+};
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [4, 8, 10] })}</div>
+            <div class="col">${H.code(`#include "Vector.hpp"
+
+Vector::Vector(int size)
+    : values(new int[size]), size(size) {
+}
+Vector::~Vector() {
+    delete[] values;
+}
+int Vector::get(int i) const {
+    return values[i];
+}
+void Vector::set(int i, int x) {
+    values[i] = x;
+}
+Vector *Vector::add(const Vector &b) const {
+    if (size != b.size) return nullptr;
+    auto r = new Vector(size);
+    for (int i = 0; i < size; i++)
+        r->values[i] = values[i] + b.values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true, hl: [6, 7] })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector a(3);
+    Vector b(3);
+    for (int i = 0; i < 3; i++) {
+        a.set(i, i);
+        b.set(i, 10 * i);
+    }
+    auto c = a.add(b);
+    printf("%d\\n", c->get(2));
+    delete c;
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [5, 6, 8, 9, 11, 13] })}</div>
+          </div>
+        `
       },
       {
         title: 'Un pointeur « automatique »',
