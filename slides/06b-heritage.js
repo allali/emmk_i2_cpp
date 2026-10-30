@@ -217,11 +217,145 @@
           )}`
       },
       {
+        title: 'Fil rouge : <code>virtual</code>',
+        section: 'Polymorphisme & vtable',
+        group: 'vector',
+        html: `
+          <p><code class="inline">sum</code> reçoit un <code class="inline">Vector &amp;</code> et lit une case de trop (<code class="inline">&lt;=</code>). Sans <code class="inline">virtual</code>, c’est <code class="inline">Vector::get</code> qui est appelé : le dépassement passe inaperçu. Avec <code class="inline">virtual</code>, c’est <code class="inline">CheckedVector::get</code> : l’<code class="inline">assert</code> l’arrête.</p>
+          <div class="cols" style="grid-template-columns: 40fr 44fr 42fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+class Vector {
+    int *values;
+    int size;
+
+public:
+    Vector(int size);
+    Vector(const Vector &v);
+    Vector &operator=(const Vector &v);
+    ~Vector();
+    int length() const { return size; }
+    virtual int get(int i) const;
+    virtual void set(int i, int x);
+    Vector operator+(const Vector &b) const;
+};
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [14, 15] })}</div>
+            <div class="col">${H.code(`#ifndef CHECKED_VECTOR_HPP
+#define CHECKED_VECTOR_HPP
+#include <assert.h>
+#include "Vector.hpp"
+
+class CheckedVector : public Vector {
+public:
+    CheckedVector(int size) : Vector(size) {}
+    int get(int i) const {
+        assert(0 <= i && i < length());
+        return Vector::get(i);
+    }
+    void set(int i, int x) {
+        assert(0 <= i && i < length());
+        Vector::set(i, x);
+    }
+};
+
+#endif`, { title: 'CheckedVector.hpp', small: true })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "CheckedVector.hpp"
+
+int sum(const Vector &v) {
+    int s = 0;
+    for (int i = 0; i <= v.length(); i++)
+        s += v.get(i);
+    return s;
+}
+int main(void) {
+    CheckedVector a(3);
+    for (int i = 0; i < 3; i++)
+        a.set(i, i);
+    printf("%d\\n", sum(a));
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [4, 5, 6, 7, 8, 14] })}</div>
+          </div>
+        `
+      },
+      {
         title: 'La vtable en mémoire',
         section: 'Polymorphisme & vtable',
         html: `
           <p>Avancez pas à pas : une <b>vtable</b> par <b>classe</b>, un pointeur caché, le <b>vptr</b>, par <b>instance</b>.</p>
           ${vtableDiagram}`
+      },
+      {
+        title: 'Fil rouge : et en C ?',
+        section: 'Polymorphisme & vtable',
+        group: 'vector',
+        html: `
+          <p>Le polymorphisme écrit à la main en C : chaque instance pointe (<code class="inline">ops</code>, le « vptr ») vers une table de pointeurs de fonctions (la « vtable »).</p>
+          <div class="cols" style="grid-template-columns: 40fr 56fr 38fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_H
+#define VECTOR_H
+
+typedef struct Vector Vector;
+typedef struct {                  /* « vtable » */
+    int (*get)(const Vector *v, int i);
+} VectorOps;
+
+struct Vector {
+    const VectorOps *ops;         /* « vptr » */
+    int *values;
+    int size;
+};
+
+Vector *vector_create(int size);
+Vector *checked_vector_create(int size);
+void vector_set(Vector *v, int i, int x);
+void vector_destroy(Vector *v);
+
+#endif`, { title: 'Vector.h', small: true })}</div>
+            <div class="col">${H.code(`#include <assert.h>
+#include <stdlib.h>
+#include "Vector.h"
+static int get(const Vector *v, int i) { return v->values[i]; }
+static int checked_get(const Vector *v, int i) {
+    assert(0 <= i && i < v->size);
+    return get(v, i);
+}
+static const VectorOps vector_ops = { get };
+static const VectorOps checked_ops = { checked_get };
+static Vector *create(int size, const VectorOps *ops) {
+    Vector *v = malloc(sizeof(Vector));
+    v->ops = ops;
+    v->values = malloc(size * sizeof(int));
+    v->size = size;
+    return v;
+}
+Vector *vector_create(int n) { return create(n, &vector_ops); }
+Vector *checked_vector_create(int size) {
+    return create(size, &checked_ops);
+}
+void vector_set(Vector *v, int i, int x) { v->values[i] = x; }
+void vector_destroy(Vector *v) { free(v->values); free(v); }`, { title: 'Vector.c', small: true })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.h"
+
+int sum(const Vector *v) {
+    int s = 0;
+    for (int i = 0; i <= v->size; i++)
+        s += v->ops->get(v, i);
+    return s;
+}
+int main(void) {
+    Vector *a = checked_vector_create(3);
+    for (int i = 0; i < 3; i++)
+        vector_set(a, i, i);
+    printf("%d\\n", sum(a));
+    vector_destroy(a);
+    return 0;
+}`, { title: 'main.c', small: true })}</div>
+          </div>
+        `
       },
       {
         title: 'Question : une vtable par instance ?',
@@ -342,6 +476,70 @@
               $ g++ -c question.cpp
               error: 'void Fille::m(const Fille&)' marked 'override', but does not override
             `)}`, '<code>override</code> : le réflexe à prendre')}`
+      },
+      {
+        title: 'Fil rouge : <code>override</code>',
+        section: 'Virtuelle pure & redéfinition',
+        group: 'vector',
+        html: `
+          <p><code class="inline">override</code> : le compilateur vérifie que <code class="inline">get</code> et <code class="inline">set</code> redéfinissent bien une méthode virtuelle de <code class="inline">Vector</code>. Le bug de <code class="inline">sum</code> est corrigé (<code class="inline">&lt;</code>).</p>
+          <div class="cols" style="grid-template-columns: 40fr 44fr 42fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+class Vector {
+    int *values;
+    int size;
+
+public:
+    Vector(int size);
+    Vector(const Vector &v);
+    Vector &operator=(const Vector &v);
+    ~Vector();
+    int length() const { return size; }
+    virtual int get(int i) const;
+    virtual void set(int i, int x);
+    Vector operator+(const Vector &b) const;
+};
+
+#endif`, { title: 'Vector.hpp', small: true })}</div>
+            <div class="col">${H.code(`#ifndef CHECKED_VECTOR_HPP
+#define CHECKED_VECTOR_HPP
+#include <assert.h>
+#include "Vector.hpp"
+
+class CheckedVector : public Vector {
+public:
+    CheckedVector(int size) : Vector(size) {}
+    int get(int i) const override {
+        assert(0 <= i && i < length());
+        return Vector::get(i);
+    }
+    void set(int i, int x) override {
+        assert(0 <= i && i < length());
+        Vector::set(i, x);
+    }
+};
+
+#endif`, { title: 'CheckedVector.hpp', small: true, hl: [9, 13] })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "CheckedVector.hpp"
+
+int sum(const Vector &v) {
+    int s = 0;
+    for (int i = 0; i < v.length(); i++)
+        s += v.get(i);
+    return s;
+}
+int main(void) {
+    CheckedVector a(3);
+    for (int i = 0; i < 3; i++)
+        a.set(i, i);
+    printf("%d\\n", sum(a));
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [6] })}</div>
+          </div>
+        `
       },
       {
         title: 'Question : méthode sur une instance nullptr',
@@ -699,6 +897,71 @@
             SUMMARY: AddressSanitizer: new-delete-type-mismatch
           `)}
           ${H.key('<code class="inline">delete a;</code> (ligne 11) détruit l’objet comme un <code class="inline">A</code> (1 octet) alors que c’est un <code class="inline">B</code> de 32 octets alloué ligne 10. C’est un <b>comportement indéfini</b>, pas seulement une fuite : ne jamais dériver d’une classe sans destructeur virtuel.')}`
+      },
+      {
+        title: 'Fil rouge : destructeur virtuel',
+        section: 'Classes abstraites',
+        group: 'vector',
+        html: `
+          <p><code class="inline">delete p</code> détruit une <code class="inline">CheckedVector</code> via un <code class="inline">Vector *</code> : le destructeur doit être virtuel. Sans lui, <code class="inline">g++ -Wall</code> prévient : <em>deleting object of polymorphic class type ‘Vector’ which has non-virtual destructor might cause undefined behavior</em>.</p>
+          <div class="cols" style="grid-template-columns: 40fr 44fr 42fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+class Vector {
+    int *values;
+    int size;
+
+public:
+    Vector(int size);
+    Vector(const Vector &v);
+    Vector &operator=(const Vector &v);
+    virtual ~Vector();
+    int length() const { return size; }
+    virtual int get(int i) const;
+    virtual void set(int i, int x);
+    Vector operator+(const Vector &b) const;
+};
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [12] })}</div>
+            <div class="col">${H.code(`#ifndef CHECKED_VECTOR_HPP
+#define CHECKED_VECTOR_HPP
+#include <assert.h>
+#include "Vector.hpp"
+
+class CheckedVector : public Vector {
+public:
+    CheckedVector(int size) : Vector(size) {}
+    int get(int i) const override {
+        assert(0 <= i && i < length());
+        return Vector::get(i);
+    }
+    void set(int i, int x) override {
+        assert(0 <= i && i < length());
+        Vector::set(i, x);
+    }
+};
+
+#endif`, { title: 'CheckedVector.hpp', small: true })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "CheckedVector.hpp"
+
+int sum(const Vector &v) {
+    int s = 0;
+    for (int i = 0; i < v.length(); i++)
+        s += v.get(i);
+    return s;
+}
+int main(void) {
+    Vector *p = new CheckedVector(3);
+    for (int i = 0; i < 3; i++)
+        p->set(i, i);
+    printf("%d\\n", sum(*p));
+    delete p;
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [11, 13, 14, 15] })}</div>
+          </div>
+        `
       },
 
       /* ============ Héritage multiple ============ */

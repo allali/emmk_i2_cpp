@@ -579,6 +579,65 @@
             }
           ])}
           ${H.rule('Si la « délégation » doit être accessible aux sous-classes : héritage <code class="inline">protected</code> ; sinon : héritage <code class="inline">private</code>.')}`
+      },
+      {
+        title: 'Fil rouge : une classe fille',
+        section: 'public / protected / private',
+        group: 'vector',
+        html: `
+          <p>Un vecteur qui vérifie ses indices : <code class="inline">CheckedVector</code> hérite de <code class="inline">Vector</code>, appelle le constructeur de la mère et redéfinit <code class="inline">get</code> / <code class="inline">set</code>. Les attributs restent privés : la fille passe par <code class="inline">length()</code>.</p>
+          <div class="cols" style="grid-template-columns: 40fr 44fr 42fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+class Vector {
+    int *values;
+    int size;
+
+public:
+    Vector(int size);
+    Vector(const Vector &v);
+    Vector &operator=(const Vector &v);
+    ~Vector();
+    int length() const { return size; }
+    int get(int i) const;
+    void set(int i, int x);
+    Vector operator+(const Vector &b) const;
+};
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [13] })}</div>
+            <div class="col">${H.code(`#ifndef CHECKED_VECTOR_HPP
+#define CHECKED_VECTOR_HPP
+#include <assert.h>
+#include "Vector.hpp"
+
+class CheckedVector : public Vector {
+public:
+    CheckedVector(int size) : Vector(size) {}
+    int get(int i) const {
+        assert(0 <= i && i < length());
+        return Vector::get(i);
+    }
+    void set(int i, int x) {
+        assert(0 <= i && i < length());
+        Vector::set(i, x);
+    }
+};
+
+#endif`, { title: 'CheckedVector.hpp', small: true })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "CheckedVector.hpp"
+
+int main(void) {
+    CheckedVector a(3);
+    for (int i = 0; i < 3; i++)
+        a.set(i, i);
+    printf("%d\\n", a.get(2));
+    a.get(3);   // assert
+    return 0;
+}`, { title: 'main.cpp', small: true })}</div>
+          </div>
+        `
       }
     ]
   });
