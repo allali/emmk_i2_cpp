@@ -5,7 +5,7 @@ Course.chapter({
   icon: '🧱',
   color: '#8b5cf6',
   intro: 'Regrouper données et comportements : déclarer, instancier, protéger et initialiser des objets.',
-  sections: ['Définition et déclaration', 'Visibilité, friend, struct', 'Attributs et méthodes', 'this', 'Espaces de noms', 'Références et const', 'Constructeur', 'Destructeur', 'static', 'Exemple : Compteur', 'Exemple : Point', 'Exemple : Matrix', 'L’essentiel'],
+  sections: ['Définition et déclaration', 'Visibilité, friend, struct', 'Attributs et méthodes', 'this', 'Espaces de noms', 'Références et const', 'Constructeur', 'Destructeur', 'Recopie', 'static', 'Exemple : Point', 'Exemple : Matrix', 'Exemple : Compteur', 'L’essentiel'],
   slides: [
     /* ---------------- Définition et déclaration ---------------- */
     {
@@ -128,6 +128,7 @@ Course.chapter({
     {
       title: 'Fil rouge : <code>struct</code> sans <code>typedef</code>',
       section: 'Visibilité, friend, struct',
+      group: 'vector',
       html: `
         <p>En C++, le nom de la structure est un type : le <code class="inline">typedef</code> devient inutile.</p>
         <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
@@ -388,6 +389,7 @@ int main(void) {
     {
       title: 'Fil rouge : des méthodes',
       section: 'this',
+      group: 'vector',
       html: `
         <p>Les fonctions deviennent des méthodes : le paramètre <code class="inline">Vector *v</code> disparaît, c’est <code class="inline">this</code> (<code class="inline">values</code> ≡ <code class="inline">this->values</code>). <code class="inline">vector_create</code> et <code class="inline">vector_destroy</code> restent des fonctions pour l’instant.</p>
         <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
@@ -834,6 +836,7 @@ int main(void) {
     {
       title: 'Fil rouge : constructeur',
       section: 'Constructeur',
+      group: 'vector',
       html: `
         <p>Le constructeur remplace <code class="inline">vector_create</code> : <code class="inline">new Vector(3)</code> alloue <b>et</b> initialise l’instance.</p>
         <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
@@ -945,7 +948,7 @@ int main(void) {
           A *t = new A[10];  // dynamique
           A tableau2[10];    // automatique
         `)}
-        ${H.warn('Une classe <b>sans constructeur par défaut</b> ne peut pas être utilisée avec les tableaux.')}
+        ${H.warn('Une classe <b>sans constructeur par défaut</b> ne peut pas être utilisée avec les tableaux (sauf en donnant une valeur à chaque élément : <code class="inline">A t[3] = {1, 2, 3};</code> et, depuis C++11, <code class="inline">new A[3]{1, 2, 3}</code>).')}
         <p>Solution : un <strong>tableau de pointeurs</strong>, chaque élément étant instancié séparément avec le bon constructeur.</p>
         ${H.code(`
           class A {

@@ -326,6 +326,7 @@
       const other = shown.revShown === 'old' ? Object.assign({}, s, { revShown: 'new' }) : Object.assign({}, s, s.rev.old || {}, { revShown: 'old' });
       if (!shown.absent && !other.absent) try { markRevDiff(art, other); } catch (e) { /* mise en évidence facultative */ }
     }
+    if (s.group) groupNav(art, i);
     if (hidden(i)) art.classList.add('forced');   // diapo masquée ouverte depuis « Suivant (modif) » : on montre tout
     $$('.diagram', art).forEach(Diagram.mount);
     if (window.Widgets) $$('.widget', art).forEach(el => { if (!(simOff() && el.classList.contains('w-sim'))) Widgets.mount(el); });
@@ -350,6 +351,17 @@
     updateReviewUi();
     fit();
     if (window.innerWidth < 900) document.body.classList.remove('toc-open');
+  }
+
+  /* Diapos d'une même série (slide.group, ex. un exemple fil rouge) : boutons pour sauter de l'une à l'autre. */
+  function groupNav(art, i) {
+    const g = slides[i].group;
+    const idx = slides.map((x, j) => j).filter(j => slides[j].group === g && (j === i || !hidden(j)));
+    const k = idx.indexOf(i), head = $('.slide-head', art);
+    if (!head) return;
+    const btn = (j, label) => '<button class="grp-btn"' + (j === undefined ? ' disabled' : ' data-go="' + j + '"') + '>' + label + '</button>';
+    head.insertAdjacentHTML('afterbegin', '<nav class="grp-nav">' + btn(idx[k - 1], '← précédent') +
+      '<span>' + (k + 1) + ' / ' + idx.length + '</span>' + btn(idx[k + 1], 'suivant →') + '</nav>');
   }
 
   /* Indique sur le bouton « Suivant » s'il reste des étapes dans la diapo. */

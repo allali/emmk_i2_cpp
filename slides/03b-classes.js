@@ -84,7 +84,7 @@
       /* ------------------------------------------------------------ Constructeur par recopie */
       {
         title: 'Constructeur par recopie',
-        section: 'Constructeur',
+        section: 'Recopie',
         html: `
           <p class="lead">Le <em class="term">constructeur par recopie</em> permet d’instancier une classe à partir d’une <strong>autre instance de cette classe</strong>.</p>
           <p>Il est utilisé, entre autres, lors du <strong>passage de paramètres</strong> à une fonction et pour la <strong>valeur de retour</strong>.</p>
@@ -104,7 +104,7 @@
       },
       {
         title: 'Pourquoi pas <code>A(A x)</code> ?',
-        section: 'Constructeur',
+        section: 'Recopie',
         html: `
           <p>L’idée est d’avoir dans <code class="inline">A</code> un constructeur qui prend une instance de <code class="inline">A</code> en argument :</p>
           ${H.cols(
@@ -366,6 +366,7 @@
       {
         title: 'Fil rouge : <code>const</code> et références',
         section: 'Références et const',
+        group: 'vector',
         html: `
           <p><code class="inline">get</code> et <code class="inline">add</code> ne modifient pas l’instance : ce sont des méthodes <code class="inline">const</code>. <code class="inline">b</code> est passé par référence constante.</p>
           <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
@@ -531,7 +532,7 @@ int main(void) {
       },
       {
         title: 'Constructeur par recopie (suite)',
-        section: 'Constructeur',
+        section: 'Recopie',
         html: `
           <p>Le constructeur par recopie peut donc s’écrire de deux façons :</p>
           ${H.code(`
@@ -546,7 +547,7 @@ int main(void) {
       },
       {
         title: 'La recopie générée par le compilateur',
-        section: 'Constructeur',
+        section: 'Recopie',
         html: `
           <p>Pour cette classe, le compilateur génère l’équivalent de :</p>
           ${H.code(`
@@ -563,14 +564,14 @@ int main(void) {
       },
       {
         title: 'Copie superficielle : le double free',
-        section: 'Constructeur',
+        section: 'Recopie',
         html: `
           <p>Ici, il y a une erreur : on libère <strong>deux fois</strong> le même espace mémoire.</p>
           ${shallowDiagram}`
       },
       {
         title: 'Le double free, vu par AddressSanitizer',
-        section: 'Constructeur',
+        section: 'Recopie',
         html: `
           <p>Compilé avec <code class="inline">-fsanitize=address</code>, le programme s’arrête et indique <strong>où</strong> la mémoire a été libérée deux fois :</p>
           ${H.asan(`
@@ -590,8 +591,77 @@ int main(void) {
       },
       {
         title: 'Copie profonde : la correction',
-        section: 'Constructeur',
+        section: 'Recopie',
         html: deepDiagram
+      },
+      {
+        title: 'Fil rouge : constructeur par recopie',
+        section: 'Recopie',
+        group: 'vector',
+        html: `
+          <p>Sans ce constructeur, <code class="inline">d</code> et <code class="inline">a</code> partageraient le même tableau : double <code class="inline">delete[]</code> à la fin du bloc. La recopie alloue un nouveau tableau et copie les valeurs.</p>
+          <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+class Vector {
+    int *values;
+    int size;
+
+public:
+    Vector(int size);
+    Vector(const Vector &v);
+    ~Vector();
+    int get(int i) const;
+    void set(int i, int x);
+    Vector *add(const Vector &b) const;
+};
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [10] })}</div>
+            <div class="col">${H.code(`#include "Vector.hpp"
+
+Vector::Vector(int size)
+    : values(new int[size]), size(size) {
+}
+Vector::Vector(const Vector &v)
+    : values(new int[v.size]), size(v.size) {
+    for (int i = 0; i < size; i++)
+        values[i] = v.values[i];
+}
+Vector::~Vector() {
+    delete[] values;
+}
+int Vector::get(int i) const {
+    return values[i];
+}
+void Vector::set(int i, int x) {
+    values[i] = x;
+}
+Vector *Vector::add(const Vector &b) const {
+    if (size != b.size) return nullptr;
+    auto r = new Vector(size);
+    for (int i = 0; i < size; i++)
+        r->values[i] = values[i] + b.values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true, hl: [6, 7, 8, 9] })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector a(3);
+    Vector b(3);
+    for (int i = 0; i < 3; i++) {
+        a.set(i, i);
+        b.set(i, 10 * i);
+    }
+    Vector d = a;   // recopie
+    auto c = a.add(b);
+    printf("%d\\n", c->get(2));
+    delete c;
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [11] })}</div>
+          </div>
+        `
       },
       {
         title: 'Constructeurs <code>protected</code> et <code>private</code>',
@@ -671,6 +741,7 @@ int main(void) {
       {
         title: 'Fil rouge : destructeur',
         section: 'Destructeur',
+        group: 'vector',
         html: `
           <p>Le destructeur remplace <code class="inline">vector_destroy</code>. Les attributs deviennent privés (<code class="inline">class</code>). <code class="inline">a</code> et <code class="inline">b</code> sont automatiques : détruits à la fin du bloc, sans <code class="inline">delete</code>.</p>
           <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
@@ -765,7 +836,7 @@ int main(void) {
       },
       {
         title: 'AutoInt : transférer le pointeur',
-        section: 'Destructeur',
+        section: 'Recopie',
         html: `
           ${H.cols(
             H.code(`

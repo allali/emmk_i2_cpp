@@ -199,7 +199,7 @@
 
   Course.chapter({
     id: 'classes',
-    sections: ['Exemple : Compteur', 'Exemple : Point', 'Exemple : Matrix', 'L’essentiel'],
+    sections: ['Exemple : Point', 'Exemple : Matrix', 'Exemple : Compteur', 'L’essentiel'],
     slides: [
       {
         title: 'Une classe <code>Compteur</code>',

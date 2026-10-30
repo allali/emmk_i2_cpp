@@ -68,6 +68,7 @@
       {
         title: 'Fil rouge : un vecteur en C',
         section: 'Automatique & dynamique',
+        group: 'vector',
         html: `
           <p>Point de départ en C, que l’on fera évoluer en C++ au fil des notions.</p>
           <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
@@ -221,6 +222,7 @@ int main(void) {
       {
         title: 'Fil rouge : de <code>malloc</code> à <code>new</code>',
         section: 'Automatique & dynamique',
+        group: 'vector',
         html: `
           <p><code class="inline">malloc</code> / <code class="inline">free</code> deviennent <code class="inline">new</code> / <code class="inline">delete</code> (<code class="inline">delete[]</code> pour un tableau), <code class="inline">NULL</code> devient <code class="inline">nullptr</code>.</p>
           <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">
@@ -332,6 +334,7 @@ int main(void) {
       {
         title: 'Fil rouge : <code>auto</code>',
         section: 'auto',
+        group: 'vector',
         html: `
           <p>Le type de <code class="inline">r</code> et de <code class="inline">c</code> est déduit de la valeur de retour de la fonction (<code class="inline">Vector *</code>).</p>
           <div class="cols" style="grid-template-columns: 41fr 52fr 40fr; gap: 14px">

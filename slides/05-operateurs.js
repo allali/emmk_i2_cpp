@@ -118,6 +118,75 @@
           ])}`
       },
       {
+        title: 'Fil rouge : <code>operator+</code>',
+        section: 'Syntaxe',
+        group: 'vector',
+        html: `
+          <p><code class="inline">a + b</code> ≡ <code class="inline">a.operator+(b)</code> : résultat renvoyé <strong>par valeur</strong>, plus de <code class="inline">new</code> ni de <code class="inline">delete</code> dans <code class="inline">main</code>.</p>
+          <div class="cols" style="grid-template-columns: 46fr 52fr 34fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+class Vector {
+    int *values;
+    int size;
+
+public:
+    Vector(int size);
+    Vector(const Vector &v);
+    ~Vector();
+    int get(int i) const;
+    void set(int i, int x);
+    Vector operator+(const Vector &b) const;
+};
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [14] })}</div>
+            <div class="col">${H.code(`#include <assert.h>
+#include "Vector.hpp"
+
+Vector::Vector(int size)
+    : values(new int[size]), size(size) {
+}
+Vector::Vector(const Vector &v)
+    : values(new int[v.size]), size(v.size) {
+    for (int i = 0; i < size; i++)
+        values[i] = v.values[i];
+}
+Vector::~Vector() {
+    delete[] values;
+}
+int Vector::get(int i) const {
+    return values[i];
+}
+void Vector::set(int i, int x) {
+    values[i] = x;
+}
+Vector Vector::operator+(const Vector &b) const {
+    assert(size == b.size);
+    Vector r(size);
+    for (int i = 0; i < size; i++)
+        r.values[i] = values[i] + b.values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true, hl: [1, 21, 22, 23, 25] })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector a(3);
+    Vector b(3);
+    for (int i = 0; i < 3; i++) {
+        a.set(i, i);
+        b.set(i, 10 * i);
+    }
+    Vector d = a;   // recopie
+    Vector c = a + b;
+    printf("%d\\n", c.get(2));
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [12, 13] })}</div>
+          </div>
+        `
+      },
+      {
         title: 'Opérateurs : précédence',
         section: 'Syntaxe',
         html: `
@@ -482,6 +551,77 @@
               `, hl: [12]
             }
           ], { tiny: true })}`
+      },
+      {
+        title: 'Fil rouge : <code>operator=</code>',
+        section: 'Affectation',
+        group: 'vector',
+        html: `
+          <p>Sans <code class="inline">operator=</code>, <code class="inline">d = c;</code> copierait le pointeur : fuite de l’ancien tableau de <code class="inline">d</code> et double <code class="inline">delete[]</code>.</p>
+          <div class="cols" style="grid-template-columns: 44fr 56fr 34fr; gap: 14px">
+            <div class="col">${H.code(`#ifndef VECTOR_HPP
+#define VECTOR_HPP
+
+class Vector {
+    int *values;
+    int size;
+
+public:
+    Vector(int size);
+    Vector(const Vector &v);
+    Vector &operator=(const Vector &v);
+    ~Vector();
+    int get(int i) const;
+    void set(int i, int x);
+    Vector operator+(const Vector &b) const;
+};
+
+#endif`, { title: 'Vector.hpp', small: true, hl: [11] })}</div>
+            <div class="col">${H.code(`#include <assert.h>
+#include "Vector.hpp"
+Vector::Vector(int size)
+    : values(new int[size]), size(size) {
+}
+Vector::Vector(const Vector &v)
+    : values(new int[v.size]), size(v.size) {
+    for (int i = 0; i < size; i++) values[i] = v.values[i];
+}
+Vector &Vector::operator=(const Vector &v) {
+    if (this == &v) return *this;
+    delete[] values;
+    values = new int[v.size];
+    size = v.size;
+    for (int i = 0; i < size; i++) values[i] = v.values[i];
+    return *this;
+}
+Vector::~Vector() { delete[] values; }
+int Vector::get(int i) const { return values[i]; }
+void Vector::set(int i, int x) { values[i] = x; }
+Vector Vector::operator+(const Vector &b) const {
+    assert(size == b.size);
+    Vector r(size);
+    for (int i = 0; i < size; i++)
+        r.values[i] = values[i] + b.values[i];
+    return r;
+}`, { title: 'Vector.cpp', small: true, hl: [10, 11, 12, 13, 14, 15, 16, 17] })}</div>
+            <div class="col">${H.code(`#include <stdio.h>
+#include "Vector.hpp"
+
+int main(void) {
+    Vector a(3);
+    Vector b(3);
+    for (int i = 0; i < 3; i++) {
+        a.set(i, i);
+        b.set(i, 10 * i);
+    }
+    Vector d = a;   // recopie
+    Vector c = a + b;
+    d = c;          // affectation
+    printf("%d\\n", d.get(2));
+    return 0;
+}`, { title: 'main.cpp', small: true, hl: [13, 14] })}</div>
+          </div>
+        `
       },
       {
         title: 'La règle des trois',

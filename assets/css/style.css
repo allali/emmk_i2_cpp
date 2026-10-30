@@ -214,6 +214,14 @@ body.no-anim #sidebar { transition: none; }
   content: ''; display: block; width: 56px; height: 4px; border-radius: 4px; margin-top: 14px;
   background: linear-gradient(90deg, var(--ch, var(--accent)), transparent);
 }
+/* navigation dans une série de diapos (slide.group) */
+.grp-nav { float: right; display: flex; align-items: center; gap: 8px; margin: 22px 0 0 16px; font-size: 14px; color: var(--muted); }
+.grp-btn {
+  font: inherit; font-weight: 600; padding: 5px 12px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.grp-btn:hover:not(:disabled) { border-color: var(--ch, var(--accent)); color: var(--ch, var(--accent)); }
+.grp-btn:disabled { opacity: .4; cursor: default; }
 .slide-body { font-size: clamp(16px, 1.35vw, 19px); }
 .slide-body > * + * { margin-top: 16px; }
 .slide-body p { margin: 0; }
