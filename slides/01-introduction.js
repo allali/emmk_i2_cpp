@@ -23,6 +23,36 @@ Course.chapter({
         </div>`
     },
     {
+      title: 'Où trouve-t-on du C++ aujourd’hui ?',
+      section: 'Historique',
+      html: `
+        <p class="lead">Plus de 40 ans après sa création, le C++ reste incontournable partout où l’on a besoin de
+        <strong>performances</strong> et de <strong>maîtrise de la mémoire</strong>.</p>
+        <div class="dom-grid">
+          ${[
+            ['🚗', '#ef4444', 'Embarqué &amp; automobile', 'calculateurs embarqués (AUTOSAR), cartes Arduino, règles MISRA C++'],
+            ['🔬', '#3b6ff5', 'Calcul scientifique', 'simulation numérique (OpenFOAM), algèbre linéaire (Eigen), ROOT au CERN'],
+            ['🧠', '#8b5cf6', 'Intelligence artificielle', 'cœur de PyTorch et TensorFlow, CUDA sur GPU, llama.cpp, ONNX Runtime'],
+            ['🎮', '#10b981', 'Jeux vidéo', 'moteurs de jeu (Unreal Engine), rendu temps réel'],
+            ['🌐', '#0ea5e9', 'Navigateurs &amp; systèmes', 'Chrome, Firefox, compilateurs (LLVM / Clang), bases de données (MySQL)'],
+            ['📈', '#f59e0b', 'Finance', 'trading haute fréquence : chaque microseconde compte'],
+            ['🎨', '#ec4899', 'Image &amp; 3D', 'vision par ordinateur (OpenCV), Blender, logiciels Adobe'],
+            ['🚀', '#14b8a6', 'Spatial &amp; robotique', 'framework F Prime de la NASA (hélicoptère martien Ingenuity), robotique (ROS)']
+          ].map(([i, c, t, d]) => `<div class="dom-card" style="--dc: ${c}"><div class="dom-ic">${i}</div><h4>${t}</h4><p>${d}</p></div>`).join('')}
+        </div>
+        <style>
+          .dom-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 8px; }
+          .dom-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--dc);
+            border-radius: 12px; padding: 14px 14px 12px; box-shadow: var(--shadow); text-align: center;
+            background-image: linear-gradient(180deg, color-mix(in srgb, var(--dc) 10%, transparent), transparent 60%); }
+          .dom-card .dom-ic { width: 58px; height: 58px; margin: 0 auto 8px; border-radius: 50%; display: grid; place-items: center;
+            font-size: 30px; background: color-mix(in srgb, var(--dc) 18%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--dc) 8%, transparent); }
+          .dom-card h4 { margin: 0 0 4px; font-size: 1em; color: var(--dc); }
+          .dom-card p { margin: 0; font-size: .85em; color: var(--text-2); line-height: 1.35; }
+        </style>
+        ${H.key('Point commun : du code <strong>proche de la machine</strong> (comme le C) mais avec des <strong>abstractions</strong> (classes, templates) qui ne coûtent rien à l’exécution.')}`
+    },
+    {
       title: 'C(++) : ce que le C++ ajoute',
       section: 'Du C au C++',
       html: `

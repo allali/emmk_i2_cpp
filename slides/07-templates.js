@@ -381,18 +381,32 @@
           <p>Parmi les conteneurs les plus connus : <code class="inline">std::vector</code>, qui répond aux concepts de
           <em class="term">« Conteneur à Accès Quelconque »</em> et <em class="term">« Séquence avec insertion en fin »</em>
           (complexité, noms de méthodes, types internes…).</p>
-          ${H.code(`
-            #include <vector>
+          ${H.cols(
+            H.code(`
+              #include <vector>
 
-            std::vector<int> v;
-            v.push_back(0);
-            v.push_back(1);
-            v[0] = 2;
-            for (std::vector<int>::iterator i = v.begin();
-                 i != v.end();
-                 i++)
-                std::cout << " " << *i;
-          `, { hl: [7] })}
+              std::vector<int> v;
+              v.push_back(0);
+              v.push_back(1);
+              v[0] = 2;
+              for (std::vector<int>::iterator i = v.begin();
+                   i != v.end();
+                   i++)
+                  std::cout << " " << *i;
+            `, { title: 'avec un itérateur', hl: [7] }),
+            H.code(`
+              #include <vector>
+
+              std::vector<int> v;
+              v.push_back(0);
+              v.push_back(1);
+              v[0] = 2;
+              for (auto i : v)    // C++11 : i est un int
+                  std::cout << " " << i;
+              for (auto &i : v)   // i est un int& :
+                  i++;            // modifie v
+            `, { title: 'boucle « for (auto i : v) »', hl: [7, 9] })
+          )}
           ${H.java('<code class="inline">v.begin()</code> / <code class="inline">v.end()</code> jouent le rôle d’<code class="inline">Iterator</code> (<code class="inline">hasNext()</code> ≈ <code class="inline">i != v.end()</code>, <code class="inline">next()</code> ≈ <code class="inline">*i</code> puis <code class="inline">i++</code>). Le « for-each » Java s’écrit <code class="inline">for (auto x : v)</code>.')}
           ${H.info('<code class="inline">iterator</code> est un <strong>type interne</strong> du vecteur : celui qui implémente le concept d’itérateur pour cette classe.')}`
       },
